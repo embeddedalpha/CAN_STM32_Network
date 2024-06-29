@@ -26,6 +26,10 @@ CAN_TX_Typedef SLAVE1_TX;
 CAN_RX_Typedef SLAVE1_RX;
 CAN_Filter_TypeDef SLAVE1_filter;
 
+void CAN1_RX0_IRQHandler(void);
+
+bool flag = 0;
+
 int main(void)
 {
 	MCU_Clock_Setup();
@@ -52,13 +56,25 @@ int main(void)
 
 
 
-	for(;;);
+	for(;;)
+	{
+		if(flag == 1)
+		{
+			CAN_Get_Packet(&SLAVE1, &SLAVE1_RX);
+
+
+			flag = 0;
+		}
+
+	}
 }
 
 
 
 void CAN1_RX0_IRQHandler(void)
 {
-	//Get Data via RX interrupt
-	CAN_Get_Packet(&SLAVE1, &SLAVE1_RX);
+	flag = 1;
+
+
+
 }
