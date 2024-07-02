@@ -33,6 +33,7 @@ bool flag = 0;
 int main(void)
 {
 	MCU_Clock_Setup();
+	Delay_Config();
 
 	SLAVE1.CAN_INSTANCE = CAN1;
 	SLAVE1.RX_Pin = CAN_Pin.RX.PA11;
@@ -41,11 +42,11 @@ int main(void)
 	SLAVE1.interrupt = CAN_Interrupt.Fifo0_Message_Pending;
 	CAN_Init(&SLAVE1);
 
-	SLAVE1_filter.ID = 0x00;
-	SLAVE1_filter.filter_id = 0;
-	SLAVE1_filter.id_type = CAN_ID.Standard;
-	SLAVE1_filter.frame_type = CAN_Frame.Data_Frame;
-	CAN_Filter_Init(&SLAVE1, &SLAVE1_filter);
+//	SLAVE1_filter.ID = 0x00;
+//	SLAVE1_filter.filter_id = 0;
+//	SLAVE1_filter.id_type = CAN_ID.Standard;
+//	SLAVE1_filter.frame_type = CAN_Frame.Data_Frame;
+//	CAN_Filter_Init(&SLAVE1, &SLAVE1_filter);
 	CAN_Start(&SLAVE1);
 
 	__disable_irq();
@@ -58,13 +59,29 @@ int main(void)
 
 	for(;;)
 	{
-		if(flag == 1)
-		{
-			CAN_Get_Packet(&SLAVE1, &SLAVE1_RX);
+		SLAVE1_TX.id_type = CAN_ID.Standard;
+		SLAVE1_TX.frame_type = CAN_Frame.Data_Frame;
+		SLAVE1_TX.send_timestamp = false;
+		SLAVE1_TX.ID = 0x200;
+		SLAVE1_TX.data_length = 8;
+		SLAVE1_TX.data[0] = 0x01;
+		SLAVE1_TX.data[1] = 0x02;
+		SLAVE1_TX.data[2] = 0x03;
+		SLAVE1_TX.data[3] = 0x04;
+		SLAVE1_TX.data[4] = 0x05;
+		SLAVE1_TX.data[5] = 0x06;
+		SLAVE1_TX.data[6] = 0x07;
+		SLAVE1_TX.data[7] = 0x08;
+		CAN_Send_Packet(&SLAVE1, &SLAVE1_TX);
+		Delay_ms(10);
 
-
-			flag = 0;
-		}
+//		if(flag == 1)
+//		{
+//			CAN_Get_Packet(&SLAVE1, &SLAVE1_RX);
+//
+//
+//			flag = 0;
+//		}
 
 	}
 }

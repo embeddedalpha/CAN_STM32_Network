@@ -55,4 +55,53 @@ __STATIC_INLINE void separateFractionAndIntegral(double number, double *fraction
     *fractionalPart = number - *integralPart;
 }
 
+__STATIC_INLINE uint32_t Delay_Config(void)
+{
+
+	SysTick->CTRL = 0;
+	SysTick->LOAD = 0x00FFFFFF;
+	SysTick->VAL = 0;
+	SysTick->CTRL |= 5;
+	return (0UL);                                                     /* Function successful */
+}
+
+__STATIC_INLINE uint32_t Delay_ns500(void)
+{
+
+	SysTick->LOAD = 192;
+	SysTick->VAL = 0;
+	while((SysTick->CTRL & 0x00010000) == 0);
+	return (0UL);                                                     /* Function successful */
+}
+
+
+__STATIC_INLINE uint32_t Delay_us(float us)
+{
+
+	SysTick->LOAD = (SystemCoreClock / 1000000) * us;
+	SysTick->VAL = 0;
+	while((SysTick->CTRL & 0x00010000) == 0);
+	return (0UL);                                                     /* Function successful */
+}
+
+__STATIC_INLINE uint32_t Delay_ms(unsigned long ms)
+{
+	unsigned long x = (SystemCoreClock / 1000) * (ms);
+	SysTick->LOAD = x ;
+	SysTick->VAL = 0;
+	while((SysTick->CTRL & 0x00010000) == 0);
+	return (0UL);                                                     /* Function successful */
+}
+
+
+__STATIC_INLINE uint32_t Delay_s(unsigned long s)
+{
+	s = s * 1000;
+	for (; s>0; s--)
+	{
+		Delay_ms(1);
+	}
+	return (0UL);
+}
+
 #endif /* MAIN_F103_H_ */

@@ -24,8 +24,8 @@ int CAN_Init(CAN_Config *config)
 {
     RCC -> APB1ENR &= ~RCC_APB1ENR_CAN1EN;
 
-    if(config->RX_Pin == CAN_Pin.RX.PA11) GPIO_Pin_Setup(GPIOA, 11, GPIO_Config.ALT_PUSH_PULL_OUTPUT);
-    else if(config->RX_Pin == CAN_Pin.RX.PB8) GPIO_Pin_Setup(GPIOB, 8, GPIO_Config.ALT_PUSH_PULL_OUTPUT);
+    if(config->RX_Pin == CAN_Pin.RX.PA11) GPIO_Pin_Setup(GPIOA, 11, GPIO_Config.INPUT_MODE);
+    else if(config->RX_Pin == CAN_Pin.RX.PB8) GPIO_Pin_Setup(GPIOB, 8, GPIO_Config.INPUT_MODE);
 
     if(config->TX_Pin == CAN_Pin.TX.PA12) GPIO_Pin_Setup(GPIOA, 12, GPIO_Config.ALT_PUSH_PULL_OUTPUT);
     else if(config->TX_Pin == CAN_Pin.TX.PB9) GPIO_Pin_Setup(GPIOB, 9, GPIO_Config.ALT_PUSH_PULL_OUTPUT);
@@ -36,13 +36,27 @@ int CAN_Init(CAN_Config *config)
 //    GPIOA -> CRH &= ~GPIO_CRH_CNF12_0;
 
     RCC -> APB1ENR |= RCC_APB1ENR_CAN1EN;
+    config -> CAN_INSTANCE -> MCR |=   CAN_MCR_RESET | CAN_MCR_SLEEP;
+    while(!(config -> CAN_INSTANCE  -> MSR & CAN_MSR_SLAK)){}
+    config -> CAN_INSTANCE -> MCR &= ~CAN_MCR_SLEEP;
+    config -> CAN_INSTANCE -> MCR |= CAN_MCR_INRQ;
+	while((config -> CAN_INSTANCE -> MSR & CAN_MSR_SLAK)){}
+	while(!(config -> CAN_INSTANCE-> MSR & CAN_MSR_INAK)){}
 
 
-	config -> CAN_INSTANCE -> MCR	|= CAN_MCR_INRQ;
-	config -> CAN_INSTANCE -> MCR |= CAN_MCR_NART;
-	config -> CAN_INSTANCE -> IER |= config -> interrupt;
+//	config -> CAN_INSTANCE -> MCR	|= CAN_MCR_INRQ;
+//	config -> CAN_INSTANCE -> MCR |= CAN_MCR_NART;
+//	config -> CAN_INSTANCE -> IER |= config -> interrupt;
 	config -> CAN_INSTANCE -> BTR = config -> Baudrate;
 
+	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
+	config -> CAN_INSTANCE -> FMR &= 0xFFFFC0FF;
+	config -> CAN_INSTANCE -> FMR |= 0x1C << 8;
+
+	config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
+	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
+	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
+    while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
 	return 1;
 }
 
@@ -91,8 +105,8 @@ int CAN_Filter_Init(CAN_Config *config, CAN_Filter_TypeDef *filter)
 void CAN_Start(CAN_Config *config)
 {
 	config -> CAN_INSTANCE -> MCR &= ~CAN_MCR_SLEEP;
-	config -> CAN_INSTANCE -> MCR &= ~CAN_MCR_INRQ;
 	while((config -> CAN_INSTANCE -> MSR & CAN_MSR_SLAK)){}
+	config -> CAN_INSTANCE -> MCR &= ~CAN_MCR_INRQ;
 	while((config -> CAN_INSTANCE ->MSR & CAN_MSR_INAK));
 }
 
@@ -130,7 +144,7 @@ void CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx)
 	config -> CAN_INSTANCE -> sTxMailBox[0].TDHR = tx->data[7] << 24 | tx->data[6] << 16 | tx->data[5] << 8 | tx->data[4] << 0;
 	config -> CAN_INSTANCE -> sTxMailBox[0].TDLR = tx->data[3] << 24 | tx->data[2] << 16 | tx->data[1] << 8 | tx->data[0] << 0;
 	config -> CAN_INSTANCE -> sTxMailBox[0].TIR  |= (1 << 0);
-	while(config -> CAN_INSTANCE -> sTxMailBox[0].TIR & (1 << 0)){}
+//	while(config -> CAN_INSTANCE -> sTxMailBox[0].TIR & (1 << 0)){}
 
 }
 
