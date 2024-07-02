@@ -1,0 +1,4 @@
+../Console/Console.c:14:7:Console_Init	16	static
+../Console/Console.c:28:7:printConsole	10016	static
+../Console/Console.c:45:6:readConsole	16	static
+../Console/Console.c:54:5:readConsole_int	16	static
