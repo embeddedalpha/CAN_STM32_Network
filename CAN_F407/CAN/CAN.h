@@ -67,7 +67,8 @@ typedef struct CAN_Config
 
 int CAN_Init(CAN_Config *config);
 
-int CAN_Filter_Init(CAN_Config *config, CAN_Filter_TypeDef *filter);
+int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t filterBank, uint8_t fifoAssignment);
+int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment);
 
 void CAN_Start(CAN_Config *config);
 

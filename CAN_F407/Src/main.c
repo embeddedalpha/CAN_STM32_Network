@@ -34,15 +34,14 @@ int main(void)
 	Master1.Baudrate = CAN_Configuration.Baudrate._1000_KBPS;
 	Master1.RX_Pin = CAN_Configuration.Pin._CAN1.RX.PB8;
 	Master1.TX_Pin = CAN_Configuration.Pin._CAN1.TX.PB9;
-
 	CAN_Init(&Master1);
 
 	Master2.CAN_INSTANCE = CAN_Configuration.Instance._CAN2;
 	Master2.Baudrate = CAN_Configuration.Baudrate._1000_KBPS;
 	Master2.RX_Pin = CAN_Configuration.Pin._CAN2.RX.PB12;
 	Master2.TX_Pin = CAN_Configuration.Pin._CAN2.TX.PB13;
-
 	CAN_Init(&Master2);
+	CAN_Set_Filter_List(&Master2, 0x200, 0x202, 0, 0);
 
 
 

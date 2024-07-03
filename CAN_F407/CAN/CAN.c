@@ -87,48 +87,50 @@ int CAN_Init(CAN_Config *config)
     while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
 	return 1;
 }
+//
+//int CAN_Filter_Init(CAN_Config *config, CAN_Filter_TypeDef *filter)
+//{
+//	uint32_t can_id = 0;
+//	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
+//
+//	if(filter->filter_id > 13)
+//	{
+//		return -1;
+//	}
+//	else
+//	{
+//// ID INFORMATION
+//		if(filter -> id_type == CAN_Configuration.ID.Standard)
+//		{
+//			can_id = (filter->ID << 21) | 0;
+//		}
+//		else
+//		{
+//			can_id = (filter->ID << 3) | 4;
+//		}
+//
+//		if(filter -> frame_type == CAN_Configuration.Frame.Remote_Frame)
+//		{
+//			can_id |= 2;
+//		}
+//
+//		config -> CAN_INSTANCE -> FA1R &= ~(1 << filter -> filter_id);
+//
+//		config -> CAN_INSTANCE -> FS1R |=  (1 << filter -> filter_id);
+//
+//		config -> CAN_INSTANCE -> sFilterRegister[filter->filter_id].FR1 = can_id;
+//		config -> CAN_INSTANCE -> sFilterRegister[filter->filter_id].FR2 = can_id;
+//
+//		config -> CAN_INSTANCE -> FFA1R &= ~(1 << filter->filter_id);
+//		config -> CAN_INSTANCE -> FA1R  |= (1 << filter->filter_id);
+//
+//		config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
+//
+//	}
+//	return 1;
+//}
+//
 
-int CAN_Filter_Init(CAN_Config *config, CAN_Filter_TypeDef *filter)
-{
-	uint32_t can_id = 0;
-	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
-
-	if(filter->filter_id > 13)
-	{
-		return -1;
-	}
-	else
-	{
-// ID INFORMATION
-		if(filter -> id_type == CAN_Configuration.ID.Standard)
-		{
-			can_id = (filter->ID << 21) | 0;
-		}
-		else
-		{
-			can_id = (filter->ID << 3) | 4;
-		}
-
-		if(filter -> frame_type == CAN_Configuration.Frame.Remote_Frame)
-		{
-			can_id |= 2;
-		}
-
-		config -> CAN_INSTANCE -> FA1R &= ~(1 << filter -> filter_id);
-
-		config -> CAN_INSTANCE -> FS1R |=  (1 << filter -> filter_id);
-
-		config -> CAN_INSTANCE -> sFilterRegister[filter->filter_id].FR1 = can_id;
-		config -> CAN_INSTANCE -> sFilterRegister[filter->filter_id].FR2 = can_id;
-
-		config -> CAN_INSTANCE -> FFA1R &= ~(1 << filter->filter_id);
-		config -> CAN_INSTANCE -> FA1R  |= (1 << filter->filter_id);
-
-		config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
-
-	}
-	return 1;
-}
 
 void CAN_Start(CAN_Config *config)
 {
@@ -260,4 +262,90 @@ void CAN_Get_Packet(CAN_Config *config, CAN_RX_Typedef *rx)
 	}
 
 
+}
+
+int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t filterBank, uint8_t fifoAssignment)
+{
+    // Enter filter initialization mode
+	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
+
+    // Set the filter bank number and initialize it
+	config -> CAN_INSTANCE ->FA1R &= ~(1 << filterBank);  // Deactivate filter
+	config -> CAN_INSTANCE->FS1R |= (1 << filterBank);   // Set filter scale to 32-bit
+	config -> CAN_INSTANCE->FM1R |= (1 << filterBank);  // Set filter mode to mask mode
+
+	if(id > 0x7ff)
+	{
+		config -> CAN_INSTANCE->sFilterRegister[filterBank].FR1 = id << 0;   // Extended ID
+		config -> CAN_INSTANCE->sFilterRegister[filterBank].FR2 = mask << 0; // Extended mask
+	}
+	else
+	{
+		config -> CAN_INSTANCE->sFilterRegister[filterBank].FR1 = id << 21;   // Standard ID
+		config -> CAN_INSTANCE->sFilterRegister[filterBank].FR2 = mask << 21; // Standard mask
+	}
+
+
+    if (fifoAssignment == 0) {
+    	config -> CAN_INSTANCE->FFA1R &= ~(1 << filterBank);
+    } else {
+    	config -> CAN_INSTANCE->FFA1R |= (1 << filterBank);
+    }
+
+    // Activate the filter
+    config -> CAN_INSTANCE->FA1R |= (1 << filterBank);
+
+    // Exit filter initialization mode
+    config -> CAN_INSTANCE->FMR &= ~CAN_FMR_FINIT;
+
+    return 1;
+}
+
+int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment)
+{
+    // Enter filter initialization mode
+    CAN1->FMR |= CAN_FMR_FINIT;
+
+    // Deactivate the filter
+    CAN1->FA1R &= ~(1 << filterBank);
+
+    // Set filter scale to 32-bit (each filter bank can store two 32-bit IDs in list mode)
+    CAN1->FS1R |= (1 << filterBank);
+
+    // Set filter mode to list mode
+    CAN1->FM1R |= (1 << filterBank);
+
+    // Set the filter IDs
+
+    if(id1 < 0x7FF)
+    {
+    	 CAN1->sFilterRegister[filterBank].FR1 = id1 << 21;  // Standard ID
+    }
+    else
+    {
+    	CAN1->sFilterRegister[filterBank].FR1 = id1 << 0;  // Extended ID
+    }
+    if(id2 < 0x7FF)
+    {
+    	 CAN1->sFilterRegister[filterBank].FR2 = id2 << 21;  // Standard ID
+    }
+    else
+    {
+    	CAN1->sFilterRegister[filterBank].FR2 = id2 << 0;  // Extended ID
+    }
+
+    // Assign the filter to the specified FIFO
+    if (fifoAssignment == 0) {
+        CAN1->FFA1R &= ~(1 << filterBank);
+    } else {
+        CAN1->FFA1R |= (1 << filterBank);
+    }
+
+    // Activate the filter
+    CAN1->FA1R |= (1 << filterBank);
+
+    // Exit filter initialization mode
+    CAN1->FMR &= ~CAN_FMR_FINIT;
+
+    return 1;
 }
