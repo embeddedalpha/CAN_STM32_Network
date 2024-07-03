@@ -22,17 +22,20 @@
  */
 int CAN_Init(CAN_Config *config)
 {
-    RCC -> APB1ENR &= ~(RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN);
+//    RCC -> APB1ENR &= ~(RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN);
 
     if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
     {
 
     	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN;
         if(config->RX_Pin == CAN_Configuration.Pin._CAN1.RX.PA11){
-        	GPIO_Pin_Init(GPIOA, 11, MODE.Input, Output_Type.Open_Drain, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
+        	GPIO_Pin_Init(GPIOA, 11, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
         }
         else if(config->RX_Pin == CAN_Configuration.Pin._CAN1.RX.PD0){
-        	GPIO_Pin_Init(GPIOD, 0, MODE.Input, Output_Type.Open_Drain, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
+        	GPIO_Pin_Init(GPIOD, 0, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
+        }
+        else if(config->RX_Pin == CAN_Configuration.Pin._CAN1.RX.PB8){
+             GPIO_Pin_Init(GPIOB, 8, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
         }
 
         if(config->TX_Pin == CAN_Configuration.Pin._CAN1.TX.PA12){
@@ -41,15 +44,18 @@ int CAN_Init(CAN_Config *config)
         else if(config->TX_Pin == CAN_Configuration.Pin._CAN1.TX.PD1){
         	GPIO_Pin_Init(GPIOD, 1, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
         }
+        else if(config->TX_Pin == CAN_Configuration.Pin._CAN1.TX.PB9){
+        	GPIO_Pin_Init(GPIOB, 9, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_1);
+        }
     }
     else if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN2)
     {
     	RCC->APB1ENR |= RCC_APB1ENR_CAN2EN;
         if(config->RX_Pin == CAN_Configuration.Pin._CAN2.RX.PB12){
-        	GPIO_Pin_Init(GPIOB, 12, MODE.Input, Output_Type.Open_Drain, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_2);
+        	GPIO_Pin_Init(GPIOB, 12, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_2);
         }
         else if(config->RX_Pin == CAN_Configuration.Pin._CAN2.RX.PB5){
-        	GPIO_Pin_Init(GPIOB, 5, MODE.Input, Output_Type.Open_Drain, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_2);
+        	GPIO_Pin_Init(GPIOB, 5, MODE.Alternate_Function, Output_Type.Push_Pull, Speed.Very_High_Speed, Pull.No_Pull_Up_Down, Alternate_Functions.CAN_2);
         }
 
         if(config->TX_Pin == CAN_Configuration.Pin._CAN2.TX.PB13){
@@ -132,41 +138,61 @@ void CAN_Start(CAN_Config *config)
 	while((config -> CAN_INSTANCE ->MSR & CAN_MSR_INAK));
 }
 
-void CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx)
+uint8_t CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx)
 {
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDHR &= ~0xFFFFFFFF;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDLR &= ~0xFFFFFFFF;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDTR &= ~0xFFFFFFFF;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TIR  &= ~0xFFFFFFFF;
+
+    // Check which mailbox is free
+	uint8_t mailbox;
+    if ((config -> CAN_INSTANCE -> TSR & CAN_TSR_TME0) == CAN_TSR_TME0) {
+        mailbox = 0;
+    } else if ((config -> CAN_INSTANCE -> TSR & CAN_TSR_TME1) == CAN_TSR_TME1) {
+        mailbox = 1;
+    } else if ((config -> CAN_INSTANCE -> TSR & CAN_TSR_TME2) == CAN_TSR_TME2) {
+        mailbox = 2;
+    } else {
+        // No available mailbox
+        return 0;
+    }
+
+	config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDHR &= ~0xFFFFFFFF;
+	config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDLR &= ~0xFFFFFFFF;
+	config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDTR &= ~0xFFFFFFFF;
+	config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  &= ~0xFFFFFFFF;
 //---------------------------------------------------------------------------------------------------------------------
 
-	if(tx->id_type == CAN_Configuration.ID.Standard)
+	if(tx->ID < 0x7FF)
 	{
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  = tx->ID << 21;
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  &= ~1 << 2;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  = tx->ID << 21;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  &= ~(CAN_TI0R_IDE);
 	}
-	else if(tx->id_type == CAN_Configuration.ID.Extended)
+	else
 	{
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  = tx->ID << 3;
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  |= 1 << 2;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  = tx->ID << 3;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  |= CAN_TI0R_IDE;
 	}
 
 //---------------------------------------------------------------------------------------------------------------------
 	if(tx->frame_type == CAN_Configuration.Frame.Data_Frame)
 	{
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  &= ~(1 << 1);
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  &= ~(1 << 1);
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDTR = tx->data_length;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDTR &= ~CAN_TDT0R_TGT;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDHR = tx->data[7] << 24 | tx->data[6] << 16 | tx->data[5] << 8 | tx->data[4] << 0;
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDLR = tx->data[3] << 24 | tx->data[2] << 16 | tx->data[1] << 8 | tx->data[0] << 0;
 	}
 	if(tx->frame_type == CAN_Configuration.Frame.Remote_Frame)
 	{
-		config -> CAN_INSTANCE -> sTxMailBox[0].TIR  |= (1 << 1);
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  |= (1 << 1);
+		config -> CAN_INSTANCE -> sTxMailBox[mailbox].TDTR = tx->data_length;
 	}
 //---------------------------------------------------------------------------------------------------------------------
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDTR = tx->data_length;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDTR &= ~CAN_TDT0R_TGT;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDHR = tx->data[7] << 24 | tx->data[6] << 16 | tx->data[5] << 8 | tx->data[4] << 0;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TDLR = tx->data[3] << 24 | tx->data[2] << 16 | tx->data[1] << 8 | tx->data[0] << 0;
-	config -> CAN_INSTANCE -> sTxMailBox[0].TIR  |= (1 << 0);
-//	while(config -> CAN_INSTANCE -> sTxMailBox[0].TIR & (1 << 0)){}
+
+	config -> CAN_INSTANCE -> sTxMailBox[mailbox].TIR  |= CAN_TI0R_TXRQ;
+    while ((config -> CAN_INSTANCE ->TSR & (CAN_TSR_RQCP0 << mailbox)) == 0);
+
+    // Clear the transmission complete flag
+    config -> CAN_INSTANCE ->TSR |= (CAN_TSR_RQCP0 << mailbox);
+    return 1;
 
 }
 

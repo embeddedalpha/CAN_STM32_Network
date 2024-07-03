@@ -1,5 +1,5 @@
 ../CAN/CAN.c:23:5:CAN_Init	40	static
-../CAN/CAN.c:85:5:CAN_Filter_Init	24	static
-../CAN/CAN.c:127:6:CAN_Start	16	static
-../CAN/CAN.c:135:6:CAN_Send_Packet	16	static
-../CAN/CAN.c:173:6:CAN_Get_Packet	40	static
+../CAN/CAN.c:91:5:CAN_Filter_Init	24	static
+../CAN/CAN.c:133:6:CAN_Start	16	static
+../CAN/CAN.c:141:9:CAN_Send_Packet	24	static
+../CAN/CAN.c:199:6:CAN_Get_Packet	40	static

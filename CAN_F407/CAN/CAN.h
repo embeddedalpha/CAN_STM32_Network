@@ -45,7 +45,6 @@ typedef struct CAN_Filter_TypeDef{
 }CAN_Filter_TypeDef;
 
 typedef struct CAN_TX_Typedef{
-	int id_type;
 	int frame_type;
 	int send_timestamp;
 	int32_t ID;
@@ -72,7 +71,7 @@ int CAN_Filter_Init(CAN_Config *config, CAN_Filter_TypeDef *filter);
 
 void CAN_Start(CAN_Config *config);
 
-void CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx);
+uint8_t CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx);
 
 void CAN_Get_Packet(CAN_Config *config, CAN_RX_Typedef *rx);
 

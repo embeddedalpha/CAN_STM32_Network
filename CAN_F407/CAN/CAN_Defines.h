@@ -24,10 +24,12 @@ static const struct CAN_Configuration
 			struct RX{
 				uint8_t PA11;
 				uint8_t PD0;
+				uint8_t PB8;
 			}RX;
 			struct TX{
 				uint8_t PA12;
 				uint8_t PD1;
+				uint8_t PB9;
 			}TX;
 		}_CAN1;
 		struct _CAN2{
@@ -94,11 +96,13 @@ static const struct CAN_Configuration
 						.RX = {
 								.PA11 = 11,
 								.PD0  = 4,
+								.PB8 = 9,
 							  },
 
 						.TX = {
 								.PA12 = 12,
 								.PD1  = 5,
+								.PB9 = 10,
 						      },
 					     },
 				._CAN2 = {
@@ -115,19 +119,19 @@ static const struct CAN_Configuration
 		           },
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
 	   . Baudrate = {
-			   . _1000_KBPS = 	0x001e0001,
-			   . _750_KBPS =    0x001c0002,
-			   . _500_KBPS =    0x001e0003,
-			   . _250_KBPS =    0x001e0007,
-			   . _200_KBPS =    0x001e0009,
-			   . _150_KBPS =    0x001c000e,
-			   . _125_KBPS =    0x001e000f,
-			   . _100_KBPS =    0x001e0013,
-			   . _75_KBPS =     0x001c001d,
-			   . _50_KBPS =     0x001e0027,
-			   . _25_KBPS =     0x001e004f,
-			   . _10_KBPS =     0x001e00c7,
-			   . _5_KBPS =      0x001e018f,
+			   . _1000_KBPS = 	0x001a0002,
+			   . _750_KBPS =    0x001a0003,
+			   . _500_KBPS =    0x001a0005,
+			   . _250_KBPS =    0x001a000b,
+			   . _200_KBPS =    0x001b000d,
+			   . _150_KBPS =    0x001a0013,
+			   . _125_KBPS =    0x001c0014,
+			   . _100_KBPS =    0x001b001b,
+			   . _75_KBPS =     0x001c0022,
+			   . _50_KBPS =     0x001b0037,
+			   . _25_KBPS =     0x001c0068,
+			   . _10_KBPS =     0x001b0117,
+			   . _5_KBPS =      0x001c020c,
 					},
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
 		. Frame = {
