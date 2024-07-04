@@ -7,8 +7,19 @@
 
 
 
+
 #include "CAN.h"
 
+CAN_RX_Typedef RX0[3];
+CAN_RX_Typedef RX1[3];
+
+bool CAN1_RX0_Flag;
+
+void CAN1_RX0_IRQHandler(void) {
+
+	CAN1_RX0_Flag = 1;
+
+}
 
 /*
  * @func 			:	CAN_Init
@@ -23,6 +34,10 @@
 int CAN_Init(CAN_Config *config)
 {
 //    RCC -> APB1ENR &= ~(RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN);
+
+
+
+
 
     if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
     {
@@ -81,10 +96,36 @@ int CAN_Init(CAN_Config *config)
 	config -> CAN_INSTANCE -> FMR &= 0xFFFFC0FF;
 	config -> CAN_INSTANCE -> FMR |= 0x1C << 8;
 
+    // Enable CAN receive FIFO 0 interrupt
+    CAN1->IER |= CAN_IER_FMPIE0;
+
+
+
 	config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
 	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
 	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
     while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
+
+    if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
+    {
+        // Enable CAN1 TX interrupt in NVIC
+        NVIC_EnableIRQ(CAN1_TX_IRQn);
+        // Enable CAN1 RX0 interrupt in NVIC
+        NVIC_EnableIRQ(CAN1_RX0_IRQn);
+        // Enable CAN1 RX0 interrupt in NVIC
+        NVIC_EnableIRQ(CAN1_RX1_IRQn);
+    }
+    else if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN2)
+    {
+        // Enable CAN1 TX interrupt in NVIC
+        NVIC_EnableIRQ(CAN2_TX_IRQn);
+        // Enable CAN1 RX0 interrupt in NVIC
+        NVIC_EnableIRQ(CAN2_RX0_IRQn);
+        // Enable CAN1 RX0 interrupt in NVIC
+        NVIC_EnableIRQ(CAN2_RX1_IRQn);
+    }
+
+
 	return 1;
 }
 //
@@ -197,72 +238,72 @@ uint8_t CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx)
     return 1;
 
 }
-
-void CAN_Get_Packet(CAN_Config *config, CAN_RX_Typedef *rx)
-{
-//	int fifo1_full, fifo2_full;
-//	fifo1_full = (config -> CAN_INSTANCE -> RF0R & CAN_RF0R_FMP0_Msk) >> CAN_RF0R_FMP0_Pos;
-//	fifo2_full = (config -> CAN_INSTANCE -> RF1R & CAN_RF1R_FMP1_Msk) >> CAN_RF1R_FMP1_Pos;
-
-	int frame_type = 0;
-	int id_type = 0;
-
-
-
-	id_type =  (CAN1 -> sFIFOMailBox[0].RIR & CAN_RI0R_IDE_Msk) >> CAN_RI0R_IDE_Pos ;
-	frame_type = (CAN1 -> sFIFOMailBox[0].RIR & CAN_RI0R_RTR_Msk) >> CAN_RI0R_RTR_Pos ;
-
-	if(id_type)
-	{
-		//Extended ID
-		rx->id_type = CAN_Configuration.ID.Extended;
-		rx->ID = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RIR & CAN_RI0R_EXID_Msk) >> CAN_RI0R_EXID_Pos;
-	}
-	else
-	{
-		//Standard ID
-		rx->id_type = CAN_Configuration.ID.Standard;
-		rx->ID = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RIR & CAN_RI0R_STID_Msk) >> CAN_RI0R_STID_Pos;
-	}
-
-	if(frame_type)
-	{
-		//RTR Frame
-		rx->frame_type = CAN_Configuration.Frame.Remote_Frame;
-		rx->data_length = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC_Msk) >> CAN_RDT0R_DLC_Pos;
-		config -> CAN_INSTANCE -> RF0R |= CAN_RF0R_RFOM0;
-		while((config -> CAN_INSTANCE -> RF0R & CAN_RF0R_RFOM0)){}
-	}
-	else
-	{
-		//Data Frame
-		rx->frame_type = CAN_Configuration.Frame.Data_Frame;
-		rx->data_length = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC_Msk) >> CAN_RDT0R_DLC_Pos;
-		for(int i = 0; i < rx->data_length; i++)
-		{
-			if(i < 4)
-			{
-				rx->data[i] =  (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDLR & ( 0xFF << (8*i))) >> (8*i);
-			}
-			else
-			{
-				rx->data[i] =  (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDHR & ( 0xFF << (8*(i-4)))) >> (8*(i-4));
-			}
-		}
-
-		int x = (config -> CAN_INSTANCE -> RF0R & CAN_RF0R_FMP0_Msk);
-
-		for(int i = 0; i < x; i++)
-		{
-			config -> CAN_INSTANCE -> RF0R |= CAN_RF0R_RFOM0;
-		}
-
-
+//
+//void CAN_Get_Packet(CAN_Config *config, CAN_RX_Typedef *rx){
+////	int fifo1_full, fifo2_full;
+////	fifo1_full = (config -> CAN_INSTANCE -> RF0R & CAN_RF0R_FMP0_Msk) >> CAN_RF0R_FMP0_Pos;
+////	fifo2_full = (config -> CAN_INSTANCE -> RF1R & CAN_RF1R_FMP1_Msk) >> CAN_RF1R_FMP1_Pos;
+//
+//	int frame_type = 0;
+//	int id_type = 0;
+//
+//
+//
+//	id_type =  (CAN1 -> sFIFOMailBox[0].RIR & CAN_RI0R_IDE_Msk) >> CAN_RI0R_IDE_Pos ;
+//	frame_type = (CAN1 -> sFIFOMailBox[0].RIR & CAN_RI0R_RTR_Msk) >> CAN_RI0R_RTR_Pos ;
+//
+//	if(id_type)
+//	{
+//		//Extended ID
+//		rx->id_type = CAN_Configuration.ID.Extended;
+//		rx->ID = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RIR & CAN_RI0R_EXID_Msk) >> CAN_RI0R_EXID_Pos;
+//	}
+//	else
+//	{
+//		//Standard ID
+//		rx->id_type = CAN_Configuration.ID.Standard;
+//		rx->ID = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RIR & CAN_RI0R_STID_Msk) >> CAN_RI0R_STID_Pos;
+//	}
+//
+//	if(frame_type)
+//	{
+//		//RTR Frame
+//		rx->frame_type = CAN_Configuration.Frame.Remote_Frame;
+//		rx->data_length = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC_Msk) >> CAN_RDT0R_DLC_Pos;
+//		config -> CAN_INSTANCE -> RF0R |= CAN_RF0R_RFOM0;
 //		while((config -> CAN_INSTANCE -> RF0R & CAN_RF0R_RFOM0)){}
-	}
-
-
-}
+//	}
+//	else
+//	{
+//		//Data Frame
+//		rx->frame_type = CAN_Configuration.Frame.Data_Frame;
+//		rx->data_length = (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC_Msk) >> CAN_RDT0R_DLC_Pos;
+//		for(int i = 0; i < rx->data_length; i++)
+//		{
+//			if(i < 4)
+//			{
+//				rx->data[i] =  (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDLR & ( 0xFF << (8*i))) >> (8*i);
+//			}
+//			else
+//			{
+//				rx->data[i] =  (config -> CAN_INSTANCE -> sFIFOMailBox[0].RDHR & ( 0xFF << (8*(i-4)))) >> (8*(i-4));
+//			}
+//		}
+//
+//		int x = (config -> CAN_INSTANCE -> RF0R & CAN_RF0R_FMP0_Msk);
+//
+//		for(int i = 0; i < x; i++)
+//		{
+//			config -> CAN_INSTANCE -> RF0R |= CAN_RF0R_RFOM0;
+//		}
+//
+//
+////		while((config -> CAN_INSTANCE -> RF0R & CAN_RF0R_RFOM0)){}
+//	}
+//
+//
+//}
+//
 
 int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t filterBank, uint8_t fifoAssignment)
 {
@@ -348,4 +389,40 @@ int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t f
     CAN1->FMR &= ~CAN_FMR_FINIT;
 
     return 1;
+}
+
+int CAN_Get_Packet_From_Fifo0(CAN_Config *config, CAN_RX_Typedef *rx)
+{
+
+
+
+
+	while(!CAN1_RX0_Flag){}
+
+
+	if (CAN1->RF0R & CAN_RF0R_FMP0) {
+        // Get the ID
+        if (CAN1->sFIFOMailBox[0].RIR & CAN_RI0R_IDE) {
+            // Extended ID
+        	rx->ID = (CAN1->sFIFOMailBox[0].RIR & CAN_RI0R_EXID_Msk) >> CAN_RI0R_EXID_Pos;
+        } else {
+            // Standard ID
+        	rx->ID = (CAN1->sFIFOMailBox[0].RIR & CAN_RI0R_STID_Msk) & CAN_RI0R_STID_Pos;
+        }
+    }
+
+	rx->id_type    = (config->CAN_INSTANCE->sFIFOMailBox[0].RIR & CAN_RI0R_IDE_Msk) >> CAN_RI0R_IDE_Pos;
+	rx->frame_type = (config->CAN_INSTANCE->sFIFOMailBox[0].RIR & CAN_RI0R_RTR_Msk) >> CAN_RI0R_RTR_Pos;
+    rx->data_length = CAN1-> sFIFOMailBox[0].RDTR & CAN_RDT0R_DLC;
+
+    rx->data[0] = (uint8_t)(CAN1->sFIFOMailBox[0].RDLR);
+    rx->data[1] = (uint8_t)(CAN1->sFIFOMailBox[0].RDLR >> 8);
+    rx->data[2] = (uint8_t)(CAN1->sFIFOMailBox[0].RDLR >> 16);
+    rx->data[3] = (uint8_t)(CAN1->sFIFOMailBox[0].RDLR >> 24);
+    rx->data[4] = (uint8_t)(CAN1->sFIFOMailBox[0].RDHR);
+    rx->data[5] = (uint8_t)(CAN1->sFIFOMailBox[0].RDHR >> 8);
+    rx->data[6] = (uint8_t)(CAN1->sFIFOMailBox[0].RDHR >> 16);
+    rx->data[7] = (uint8_t)(CAN1->sFIFOMailBox[0].RDHR >> 24);
+
+    CAN1->RF0R |= CAN_RF0R_RFOM0;
 }
