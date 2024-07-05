@@ -83,6 +83,23 @@ static const struct CAN_Configuration
 
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
 
+	struct Interrupt_ID
+	{
+		uint32_t Slave_Interrupt; 							// = 1 << 17,
+		uint32_t Wake_UP_Interrupt;							// = 1 << 16,
+		uint32_t Error_Interrupt;							// = 1 << 15,
+		uint32_t Last_Error_Code_Interrupt;					// = 1 << 11,
+		uint32_t Buss_Off_Interrupt;						// = 1 << 10,
+		uint32_t Error_Passive_Interrupt;					// = 1 << 9,
+		uint32_t Error_Warning_Interrupt;					// = 1 << 8,
+		uint32_t FIFO1_Overrun_Interrupt;					// = 1 << 6,
+		uint32_t FIFO1_Full_Interrupt;						// = 1 << 5,
+		uint32_t FIFO1_Message_Pending_Interrupt;			// = 1 << 4,
+		uint32_t FIFO0_Overrun_Interrupt;					// = 1 << 3,
+		uint32_t FIFO0_Full_Interrupt;						// = 1 << 2,
+		uint32_t FIFO0_Message_Pending_Interrupt;			// = 1 << 1,
+		uint32_t Transmit_Mailbox_Empty_Interrupt;			// = 1 << 0,
+	}Interrupt_ID;
 
 }CAN_Configuration = {
 /*$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$*/
@@ -153,6 +170,24 @@ static const struct CAN_Configuration
 				.Fifo1_Full				= (0x01 << 5),  //(0x01 << 5)
 				.Fifo0_Overflow			= (0x01 << 3), //(0x01 << 3)
 				.Fifo1_Overflow			= (0x01 << 6), //(0x01 << 6)
+		},
+
+		.Interrupt_ID
+		{
+			.Slave_Interrupt 							 = 1 << 17,
+			.Wake_UP_Interrupt							 = 1 << 16,
+			.Error_Interrupt							 = 1 << 15,
+			.Last_Error_Code_Interrupt					 = 1 << 11,
+			.Buss_Off_Interrupt						 	 = 1 << 10,
+			.Error_Passive_Interrupt					 = 1 << 9,
+			.Error_Warning_Interrupt					 = 1 << 8,
+			.FIFO1_Overrun_Interrupt					 = 1 << 6,
+			.FIFO1_Full_Interrupt						 = 1 << 5,
+			.FIFO1_Message_Pending_Interrupt			 = 1 << 4,
+			.FIFO0_Overrun_Interrupt					 = 1 << 3,
+			.FIFO0_Full_Interrupt						 = 1 << 2,
+			.FIFO0_Message_Pending_Interrupt			 = 1 << 1,
+			.Transmit_Mailbox_Empty_Interrupt			 = 1 << 0,
 		},
 };
 
