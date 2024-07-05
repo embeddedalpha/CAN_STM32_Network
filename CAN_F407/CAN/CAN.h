@@ -71,6 +71,7 @@ int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t 
 int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment);
 
 void CAN_Start(CAN_Config *config);
+int CAN_Activate_Callback(CAN_Config *config, uint32_t CAN_ID);
 
 uint8_t CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx);
 
