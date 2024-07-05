@@ -65,6 +65,6 @@ int main(void)
 		Master_TX.data[6] = 0x07;
 		Master_TX.data[7] = 0x08;
 		CAN_Send_Packet(&Master1, &Master_TX);
-//		Delay_s(1);
+		Delay_s(1);
 	}
 }
