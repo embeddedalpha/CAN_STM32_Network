@@ -49,12 +49,6 @@ void CAN2_RX1_IRQHandler(void) {
  */
 int CAN_Init(CAN_Config *config)
 {
-//    RCC -> APB1ENR &= ~(RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN);
-
-
-
-
-
     if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
     {
 
