@@ -172,7 +172,7 @@ static const struct CAN_Configuration
 				.Fifo1_Overflow			= (0x01 << 6), //(0x01 << 6)
 		},
 
-		.Interrupt_ID
+		.Interrupt_ID =
 		{
 			.Slave_Interrupt 							 = 1 << 17,
 			.Wake_UP_Interrupt							 = 1 << 16,
