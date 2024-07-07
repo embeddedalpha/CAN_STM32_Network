@@ -13,10 +13,10 @@
 /************************************************************************/
 CAN_RX_Typedef RX0[3];
 CAN_RX_Typedef RX1[3];
-extern volatile bool CAN1_RX0_Flag;
-extern volatile bool CAN1_RX1_Flag;
-extern volatile bool CAN2_RX0_Flag;
-extern volatile bool CAN2_RX1_Flag;
+ volatile bool CAN1_RX0_Flag;
+ volatile bool CAN1_RX1_Flag;
+ volatile bool CAN2_RX0_Flag;
+ volatile bool CAN2_RX1_Flag;
 /************************************************************************/
 
 /************************************************************************/
@@ -93,28 +93,39 @@ int CAN_Init(CAN_Config *config)
 
 
 
-    config -> CAN_INSTANCE -> MCR |=   CAN_MCR_RESET | CAN_MCR_SLEEP;
-    while(!(config -> CAN_INSTANCE  -> MSR & CAN_MSR_SLAK)){}
+//    config -> CAN_INSTANCE -> MCR |=   CAN_MCR_RESET | CAN_MCR_SLEEP;
+//    while(!(config -> CAN_INSTANCE  -> MSR & CAN_MSR_SLAK)){}
     config -> CAN_INSTANCE -> MCR &= ~CAN_MCR_SLEEP;
     config -> CAN_INSTANCE -> MCR |= CAN_MCR_INRQ;
-	while((config -> CAN_INSTANCE -> MSR & CAN_MSR_SLAK)){}
+//	while((config -> CAN_INSTANCE -> MSR & CAN_MSR_SLAK)){}
 	while(!(config -> CAN_INSTANCE-> MSR & CAN_MSR_INAK)){}
 
 	config -> CAN_INSTANCE -> BTR = config -> Baudrate;
 
-	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
-	config -> CAN_INSTANCE -> FMR &= 0xFFFFC0FF;
-	config -> CAN_INSTANCE -> FMR |= 0x1C << 8;
+	if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
+	{
+	    config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_CAN2SB;
+	    config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
+	}
+	else
+	{
+	    config -> CAN_INSTANCE -> FMR |= 14;
+	    config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
+	}
+
+//	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
+//	config -> CAN_INSTANCE -> FMR &= 0xFFFFC0FF;
+//	config -> CAN_INSTANCE -> FMR |= 0x1C << 8;
 
     // Enable CAN receive FIFO 0 interrupt
     config -> CAN_INSTANCE->IER |= CAN_IER_FMPIE0;
 
 
 
-	config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
-	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
-	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
-    while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
+//	config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
+//	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
+//	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
+//    while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
 
 
 
@@ -122,9 +133,9 @@ int CAN_Init(CAN_Config *config)
 	return 1;
 }
 
-int CAN_Activate_Callback(CAN_Config *config, uint32_t CAN_ID)
+int CAN_Activate_Callback(CAN_Config *config, uint32_t CAN_Interrupt_ID)
 {
-	config->CAN_INSTANCE->IER = CAN_ID;
+	config->CAN_INSTANCE->IER = CAN_Interrupt_ID;
 
 
     if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
@@ -145,6 +156,8 @@ int CAN_Activate_Callback(CAN_Config *config, uint32_t CAN_ID)
         // Enable CAN1 RX0 interrupt in NVIC
         NVIC_EnableIRQ(CAN2_RX1_IRQn);
     }
+
+    return 1;
 }
 
 //
@@ -364,7 +377,10 @@ int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t 
 int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment)
 {
     // Enter filter initialization mode
-    config -> CAN_INSTANCE->FMR |= CAN_FMR_FINIT;
+
+    config -> CAN_INSTANCE->FA1R &= ~1 << filterBank;
+    config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_CAN2SB;
+    config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
 
     // Deactivate the filter
     config -> CAN_INSTANCE->FA1R &= ~(1 << filterBank);
