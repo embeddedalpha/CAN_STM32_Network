@@ -378,7 +378,8 @@ int CAN_Set_Filter_List(CAN_Config *config,uint32_t id1, uint32_t id2, uint8_t f
 {
     // Enter filter initialization mode
 
-    config -> CAN_INSTANCE->FA1R &= ~1 << filterBank;
+	RCC->APB1ENR |= RCC_APB1ENR_CAN1EN | RCC_APB1ENR_CAN2EN;
+//    config -> CAN_INSTANCE->FA1R &= ~1 << filterBank;
     config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_CAN2SB;
     config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
 
