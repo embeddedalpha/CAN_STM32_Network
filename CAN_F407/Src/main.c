@@ -24,6 +24,12 @@ CAN_Config Master1;
 CAN_Config Master2;
 CAN_TX_Typedef Master_TX;
 
+uint8_t CAN2_Flag = 0;
+
+void CAN2_RX0_IRQHandler(void) {
+	CAN2_Flag = 1;
+}
+
 
 int main(void)
 {
@@ -41,8 +47,12 @@ int main(void)
 	Master2.RX_Pin = CAN_Configuration.Pin._CAN2.RX.PB12;
 	Master2.TX_Pin = CAN_Configuration.Pin._CAN2.TX.PB13;
 	CAN_Init(&Master2);
-	CAN_Set_Filter_List(&Master2, 0x200, 0x202, 0, 0);
+//	CAN_Set_Filter_List(&Master1, 0x200, 0x202, 0, 0);
+	CAN_Set_Filter_List_Dummy(0x200, 0x202, 14, 0);
+	CAN_Activate_Callback(&Master2, CAN_Configuration.Interrupt_ID.FIFO0_Full_Interrupt);
 
+	CAN_Start(&Master1);
+	CAN_Start(&Master2);
 
 
 
