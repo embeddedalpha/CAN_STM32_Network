@@ -77,4 +77,6 @@ uint8_t CAN_Send_Packet(CAN_Config *config, CAN_TX_Typedef *tx);
 
 void CAN_Get_Packet(CAN_Config *config, CAN_RX_Typedef *rx);
 
+int CAN_Set_Filter_List_Dummy(uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment);
+
 #endif /* CAN_H_ */
