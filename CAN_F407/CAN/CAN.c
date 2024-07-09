@@ -28,9 +28,7 @@ void CAN1_RX1_IRQHandler(void) {
 	CAN1_RX1_Flag = 1;
 }
 /************************************************************************/
-void CAN2_RX0_IRQHandler(void) {
-	CAN2_RX0_Flag = 1;
-}
+
 /************************************************************************/
 void CAN2_RX1_IRQHandler(void) {
 	CAN2_RX1_Flag = 1;
@@ -370,6 +368,59 @@ int CAN_Set_Filter_Mask(CAN_Config *config, uint32_t id, uint32_t mask, uint8_t 
 
     // Exit filter initialization mode
     config -> CAN_INSTANCE->FMR &= ~CAN_FMR_FINIT;
+
+    return 1;
+}
+
+
+int CAN_Set_Filter_List_Dummy(uint32_t id1, uint32_t id2, uint8_t filterBank, uint8_t fifoAssignment)
+{
+    // Enter filter initialization mode
+
+    CAN1 -> FA1R &= ~1 << filterBank;
+    CAN1 -> FMR = 0x2D << 8;
+    CAN1 -> FMR |=  CAN_FMR_FINIT;
+
+    // Deactivate the filter
+    CAN1 -> FA1R &= ~(1 << filterBank);
+
+    // Set filter scale to 32-bit (each filter bank can store two 32-bit IDs in list mode)
+    CAN1 -> FS1R |= (1 << filterBank);
+
+    // Set filter mode to list mode
+    CAN1 -> FM1R |= (1 << filterBank);
+
+    // Set the filter IDs
+
+    if(id1 < 0x7FF)
+    {
+    	 CAN1 -> sFilterRegister[filterBank].FR1 = id1 << 21;  // Standard ID
+    }
+    else
+    {
+    	CAN1 -> sFilterRegister[filterBank].FR1 = id1 << 0;  // Extended ID
+    }
+    if(id2 < 0x7FF)
+    {
+    	 CAN1 -> sFilterRegister[filterBank].FR2 = id2 << 21;  // Standard ID
+    }
+    else
+    {
+    	CAN1 -> sFilterRegister[filterBank].FR2 = id2 << 0;  // Extended ID
+    }
+
+    // Assign the filter to the specified FIFO
+    if (fifoAssignment == 0) {
+        CAN1 -> FFA1R &= ~(1 << filterBank);
+    } else {
+        CAN1 -> FFA1R |= (1 << filterBank);
+    }
+
+    // Activate the filter
+    CAN1 -> FA1R |= (1 << filterBank);
+
+    // Exit filter initialization mode
+    CAN1 -> FMR &= ~CAN_FMR_FINIT;
 
     return 1;
 }
