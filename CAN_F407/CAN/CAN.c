@@ -28,7 +28,9 @@ void CAN1_RX1_IRQHandler(void) {
 	CAN1_RX1_Flag = 1;
 }
 /************************************************************************/
-
+void CAN2_RX0_IRQHandler(void) {
+	CAN2_RX0_Flag = 1;
+}
 /************************************************************************/
 void CAN2_RX1_IRQHandler(void) {
 	CAN2_RX1_Flag = 1;
@@ -100,30 +102,12 @@ int CAN_Init(CAN_Config *config)
 
 	config -> CAN_INSTANCE -> BTR = config -> Baudrate;
 
-	if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
-	{
-	    config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_CAN2SB;
-	    config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
-	}
-	else
-	{
-	    config -> CAN_INSTANCE -> FMR |= 14;
-	    config -> CAN_INSTANCE -> FMR |=  CAN_FMR_FINIT;
-	}
-
-//	config -> CAN_INSTANCE -> FMR |= CAN_FMR_FINIT;
-//	config -> CAN_INSTANCE -> FMR &= 0xFFFFC0FF;
-//	config -> CAN_INSTANCE -> FMR |= 0x1C << 8;
 
     // Enable CAN receive FIFO 0 interrupt
     config -> CAN_INSTANCE->IER |= CAN_IER_FMPIE0;
 
 
 
-//	config -> CAN_INSTANCE -> FMR &= ~CAN_FMR_FINIT;
-//	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
-//	config -> CAN_INSTANCE->MCR &= ~CAN_MCR_INRQ;
-//    while((config -> CAN_INSTANCE->MSR & CAN_MSR_INAK)){}
 
 
 
@@ -138,21 +122,25 @@ int CAN_Activate_Callback(CAN_Config *config, uint32_t CAN_Interrupt_ID)
 
     if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN1)
     {
+    	__disable_irq();
         // Enable CAN1 TX interrupt in NVIC
         NVIC_EnableIRQ(CAN1_TX_IRQn);
         // Enable CAN1 RX0 interrupt in NVIC
         NVIC_EnableIRQ(CAN1_RX0_IRQn);
         // Enable CAN1 RX0 interrupt in NVIC
         NVIC_EnableIRQ(CAN1_RX1_IRQn);
+        __enable_irq();
     }
     else if(config->CAN_INSTANCE == CAN_Configuration.Instance._CAN2)
     {
+    	__disable_irq();
         // Enable CAN1 TX interrupt in NVIC
         NVIC_EnableIRQ(CAN2_TX_IRQn);
         // Enable CAN1 RX0 interrupt in NVIC
         NVIC_EnableIRQ(CAN2_RX0_IRQn);
         // Enable CAN1 RX0 interrupt in NVIC
         NVIC_EnableIRQ(CAN2_RX1_IRQn);
+        __enable_irq();
     }
 
     return 1;
@@ -394,6 +382,8 @@ int CAN_Set_Filter_List_Dummy(uint32_t id1, uint32_t id2, uint8_t filterBank, ui
 
     if(id1 < 0x7FF)
     {
+    	volatile uint32_t *CAN2_Filter_14 = (uint32_t *)0x40006AB0;
+    	*CAN2_Filter_14 |= id1 << 21;
     	 CAN1 -> sFilterRegister[filterBank].FR1 = id1 << 21;  // Standard ID
     }
     else
