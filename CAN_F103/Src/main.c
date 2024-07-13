@@ -73,7 +73,7 @@ int main(void)
 		SLAVE1_TX.data[6] = 0x07;
 		SLAVE1_TX.data[7] = 0x08;
 		CAN_Send_Packet(&SLAVE1, &SLAVE1_TX);
-		Delay_ms(10);
+		Delay_s(1);
 
 //		if(flag == 1)
 //		{
